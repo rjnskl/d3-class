@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+<script type="text/javascript">
+
+d3.tsv("jobs.tsv", ready);
+
+function ready(error, data) {
+ if (error) return console.warn(error);
+
+ //here will go formatting.
+ data.forEach(function(d){
+   d.jobs_change = +d.jobs_change;
+   d.private_job_change = +d.private_job_change;
+   d.unemployment_rate = parseFloat(d.unemployment_rate);
+
+   var spl = d.month_year.split("-");
+   d.properDate = new Date(spl[0], +spl[1] - 1, 1);
+
+   d.properDate2 = new Date(Date.parse(d.month_year + "-01 00:00:00 EDT"));
+ });
+
+ console.log(data);
+}
+
+</script>

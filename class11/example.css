@@ -1,0 +1,100 @@
+table {
+
+  border-collapse: collapse;
+}
+
+body {
+    font-family: 'arial', sans-serif;
+    font-size: 12px;
+    /*width:720px;*/
+    margin: 20px auto;
+}
+
+svg {
+  border:1px solid #f0f;
+}
+
+td {
+    padding:3px 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.g-row:hover td {
+  background-color:#ffffcc;
+  cursor: pointer;
+}
+
+.g-country-name {
+  padding-left: 10px;
+}
+
+.g-medal-count {
+  text-align: right;
+  padding-right: 10px: 
+}
+
+.axis text {
+  font-size: 12px;
+  fill: #777;
+}
+
+.axis path {
+  display: none;
+}
+
+.axis line {
+  stroke-width:1px;
+  stroke: #ccc;
+  stroke-dasharray: 2px 2px;
+}
+
+.g-table-container {
+  position: absolute;
+  left: 9px;
+  top: 43px;
+  background-color: #fff;
+  width: 125px;
+  padding: 20px 20px 20px 10px;
+}
+.g-chart {
+  width: 720px;
+  display: inline-block;
+}
+
+.g-graphic {
+  position: relative;
+  width: 900px;
+  margin: 20px auto;
+}
+
+table {
+  width:100%;
+  border-collapse: collapse;
+}
+
+.g-button-group {
+  text-align: right;
+  margin-bottom: 20px;
+}
+
+.highlighted {
+  stroke:#000;
+  stroke-width:1px;
+}
+
+circle {
+  stroke: #fff;
+  stroke-width:1px;
+}
+
+.axis .g-baseline line {
+  stroke:#000;
+  stroke-dasharray:0;
+}
+
+.g-overlay-section {
+  fill: none;
+   pointer-events: all;
+  stroke-width:1px;
+  stroke:red;
+}

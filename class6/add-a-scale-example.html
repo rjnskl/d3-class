@@ -1,0 +1,81 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+
+<style type="text/css">
+  /*css to go here*/
+
+  body {
+    font-family: arial, sans;
+    width: 720px;
+    margin: 20px auto;
+  }
+
+  svg {
+    border:1px solid #f0f;
+  }
+
+  .anscombe-circle-group text {
+    fill: #aaa;
+    font-size: 11px;
+  }
+
+  .anscombe-circle-group circle {
+    fill: red;
+    stroke: #fff;
+    stroke-width:1px;
+  }
+
+</style>
+
+<body>
+
+</body>
+
+
+
+<script>
+
+// TODO: add xScale and yScale variables with domains and ranges,
+// then position your circles accordingly.
+
+var margin = {top: 20, right: 40, bottom: 20, left: 10};
+
+var width = 720 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.tsv("group1.tsv", ready);
+
+function ready(error, data) {
+  if (error) return console.warn(error);
+
+  data.forEach(function(d) {
+    d.x = +d.x;
+    d.y = +d.y;
+  });
+
+
+  //here is your data join.
+  var circleGroup = svg.selectAll(".anscombe-circle-group")
+      .data(data)
+    .enter()
+      .append("g")
+      .attr("class", "anscombe-circle-group");
+
+  circleGroup.append("circle")
+      .attr("r", 5);
+
+  circleGroup.append("text")
+      .text(function(d) { return "(" + d.x + "," + d.y + ")"; })
+      .attr("dx", 6);
+
+
+}
+
+
+</script>

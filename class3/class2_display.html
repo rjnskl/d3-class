@@ -1,0 +1,186 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+
+<style type="text/css">
+  /*css to go here*/
+
+  body {
+    margin: 60px auto;
+    width: 720px;
+    font-family: arial, sans;
+  }
+
+  h4 {
+    display: inline-block;
+  }
+
+  .recent-value {
+    float:right;
+    color: steelblue; /*//#a81817*/;
+    font-size: 13px;
+    margin-right:50px;
+  }
+ 
+  .g-jobs-change-bar {
+    fill:#dedede;
+  }
+
+
+  svg {
+    /*border:1px solid #f0f;*/
+  }
+
+  .axis text {
+    font-size: 12px;
+    fill: #777;
+  }
+
+  .axis path {
+    display: none;
+  }
+
+  .axis line {
+    stroke-width:.3px;
+    stroke: #dedede;
+    /*stroke-dasharray: 2px 2px;*/
+  }
+
+  .axis .g-year-tick line {
+    stroke-width:1px;
+    /*stroke: #000;*/
+    /*stroke-dasharray: none;*/
+  }
+
+  .x.axis text {
+    display: none;
+    text-anchor: start;
+  }
+
+  .x.axis .g-year-tick text {
+    display: block;
+  }
+
+  .g-baseline line {
+    stroke: #000;
+    stroke-dasharray: none;
+  }
+
+  .g-most-recent-bar {
+    fill: steelblue; /*//#a81817*/;
+  }
+
+
+</style>
+
+<body>
+
+  <h6 class="recent-value"></h6>
+  <h4>Change in nonfarm payroll, in thousands of jobs</h4>
+
+  <div class="chart"></div>
+
+</body>
+
+
+
+<script>
+//JS to go here
+
+var margin = {top: 0, right: 50, bottom: 20, left: 0};
+
+var width = 720 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+var changeFormat = d3.format("+"),
+  monthFormat = d3.time.format("%m"),
+  monthFormat = d3.time.format("%Y"),
+  comma = d3.format(","),
+  displayFormat = d3.time.format("%B %Y");
+
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width], 0.1);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .tickSize(-height)
+    .tickPadding(8)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .tickSize(-width)
+    .tickPadding(8)
+    .orient("right");
+
+
+d3.tsv("jobs.tsv", ready);
+
+function ready(err, data) {
+
+  if (err) throw "error loading data";
+
+   data.forEach(function(d) {
+    d.jobs_change = +d.jobs_change;
+    d.private_job_change = +d.private_job_change;
+    d.unemployment_rate = +d.unemployment_rate;
+
+    var s = d.month_year.split("-");
+
+    d.date = new Date(s[0], (+s[1]-1) );
+  });
+
+  y.domain(d3.extent(data, function(d) { return d.jobs_change; }));
+
+  data.sort(function(a,b) { return a.date - b.date; });
+
+  var months = data.map(function(d) { return d.month_year; });
+
+  x.domain(months);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + (height) + ")")
+      .call(xAxis)
+      .selectAll("g")
+      .classed("g-year-tick", function(d) { return d.split("-")[1] == "01"; })
+      .selectAll("text")
+      .text(function(d) { return d.split("-")[0]; });
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + (width) + ",0)")
+      .call(yAxis)
+      .selectAll("g")
+      .classed("g-baseline", function(d) { return d === 0; })
+      .selectAll("text")
+      .text(function(d,i) { return changeFormat(d); });
+
+
+  var rect = svg.append("g").attr("class", "g-rect-group").selectAll("rect")
+      .data(data)
+      .enter()
+      .append("rect")
+      .attr("class", "g-jobs-change-bar")
+      .classed("g-most-recent-bar", function(d) { return d.month_year == months[months.length -1]; })
+      .attr("width", x.rangeBand())
+      .attr("x", function(d) { return x(d.month_year) + x.rangeBand()/2; })
+      .attr("y", function(d) { return y(Math.max(d.jobs_change, 0)); })
+      .attr("height", function(d) { return Math.abs(y(d.jobs_change) - y(0)); });
+
+  var last = data[data.length - 1];
+  //recent-value
+  d3.select(".recent-value").text(displayFormat(last.date) + ": " + changeFormat(last.jobs_change) + ",000 jobs" );
+
+}
+
+</script>

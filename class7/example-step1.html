@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+
+  body {
+    font-family: arial, sans;
+    font-size: 14px;
+    width: 960px;
+    margin: 40px auto;
+  }
+  svg {
+    border: 1px solid #f0f; 
+  }
+
+
+</style>
+
+<body>
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+
+
+<script type="text/javascript">
+  
+var width = 960,
+    height = 500;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+queue()
+    .defer(d3.json, "us.json")
+    .await(ready);
+
+function ready(error, us) {
+  if (error) return console.warn(error);
+
+  console.log(us);
+  console.log(topojson.feature(us, us.objects.counties).features);
+
+  // gunsByFips = {};
+  // guns.forEach(function(d) {
+  //   d.guns = +d.count3;
+  //   gunsByFips[d.FIPS] = +d.count3;
+  // });
+
+  var path = d3.geo.path();
+
+  svg.append("g")
+      .attr("class", "counties")
+    .selectAll("path")
+      .data(topojson.feature(us, us.objects.counties).features)
+    .enter().append("path")
+      .attr("d", path);
+  //     .style("fill", function(d) { 
+
+  //       return '#f0f0f0';
+  //       var guns = gunsByFips[d.id];
+
+  //       if (!guns) return "#f0f0f0";
+
+  //       return color(gunsByFips[d.id]); });
+
+  // svg.append("g")
+  //     .attr("class", "county-bubble-group")
+  //   .selectAll(".county-bubble")
+  //     .data(topojson.feature(us, us.objects.counties).features)
+  //   .enter().append("circle")
+  //     .attr("class", "county-bubble")
+  //     .attr("d", path)
+  //     .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+  //     .attr("r", radius)
+
+  // svg.append("path")
+  //     .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a.id !== b.id; }))
+  //     .attr("class", "states")
+  //     .attr("d", path);
+  
+  // function radius(d) {
+  //   return Math.sqrt(gunsByFips[d.id])/2;
+  // }
+}
+
+
+
+</script>

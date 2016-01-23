@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+
+    body {
+        font-family: 'arial', sans-serif;
+        font-size: 12px;
+        width:720px;
+        margin: 20px auto;
+    }
+
+    svg {
+      border:1px solid #f0f;
+    }
+
+    .axis text {
+      font-size: 12px;
+      fill: #777;
+    }
+
+    .axis path {
+      display: none;
+    }
+
+    .axis line {
+      stroke-width:1px;
+      stroke: #ccc;
+      stroke-dasharray: 2px 2px;
+    }
+
+    .g-enter {
+      fill:green;
+    }
+
+    .g-update {
+      fill:grey;
+    }
+
+    .g-exit {
+      fill:red;
+    }
+
+</style>
+
+<body>
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+
+<script>
+
+var margin = {top: 20, right: 50, bottom: 20, left: 10};
+
+var width = 320 - margin.left - margin.right,
+   height = 500 - margin.top - margin.bottom;
+
+var yScale = d3.scale.linear()
+    .range([height, 0]);
+
+var xScale = d3.scale.linear()
+    .range([0, width]);
+
+var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .tickSize(-height)
+    .tickPadding(8)
+    .orient("bottom")
+    .tickFormat(d3.round);
+
+var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .tickSize(-width)
+    .tickPadding(8)
+    .orient("right");
+
+var svg = d3.select("body").append("svg")
+   .attr("width", width + margin.left + margin.right)
+   .attr("height", height + margin.top + margin.bottom)
+ .append("g")
+   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.tsv("incomes.tsv", ready);
+
+function ready(err, data) {
+  
+  if (err) throw err;
+
+  // format your data
+  data.forEach( function (d) {
+      d.val = +d.val;
+      d.year = +d.year;
+  });
+
+  xScale.domain(d3.extent(data, function(d) { return d.year; }));
+  yScale.domain(d3.extent(data, function(d) { return d.val; }));
+
+  var xAxisGroup = svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + (height) + ")")
+      .call(xAxis);
+
+  var yAxisGroup = svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + (width) + ",0)")
+      .call(yAxis);
+
+  var allCountries = d3.set(data.map(function(d) { return d.country; })).values();
+
+
+  d3.select("body").append("div").selectAll(".g-country-buttons")
+      .data(allCountries)
+    .enter().append("button")
+      .attr("class", "g-country-buttons")
+      .text(function(d) { return d; })
+      .on("click", function(d) {
+        drawChartForCountry(d);
+      });
+
+  function drawChartForCountry(countryName) {
+    var thisCountry = data.filter(function(d) { return d.country == countryName; });
+
+    console.log("thisCountry", thisCountry);
+    // 1. Do your data join, but separate the data join and the enter function. Give this selection a class of `g-update`.
+
+    var countryCircleGroup = svg.selectAll(".country-circle")
+        .data(thisCountry);
+
+    countryCircleGroup
+        .classed("g-update", true);
+
+    // 2. Do your `enter()` selection, and give this selection a class of `g-enter`. 
+    var countryGroupCircle = countryCircleGroup
+        .enter()
+        .append("circle")
+        .attr("class", "country-circle g-enter")
+        .attr("r", 4);
+
+    // 4. Make a new `selectAll` call, which will select all your elements, including those you just appended. Position your new circles accordingly.
+    var allCircles = svg.selectAll(".country-circle")
+        .transition().duration(400)
+        .attr("cx", function(d) { return xScale(d.year); })
+        .attr("cy", function(d) { return yScale(d.val); });
+
+    // 5. Sometimes your new data join will have less data than your old one, so you will have to perform an `exit()` selection and remove them from the SVG. Give this selection a class of `g-exit`. (A transition on this could help)
+    countryCircleGroup.exit()
+        .attr("class", "g-exit")
+        .transition()
+        .duration(300)
+        .style("opacity", 0)
+        .remove();
+
+  }
+
+  drawChartForCountry("United States");
+
+  window.drawChartForCountry = drawChartForCountry;
+
+}
+
+</script>
+

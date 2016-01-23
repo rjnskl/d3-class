@@ -1,0 +1,230 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+
+<style type="text/css">
+  /*css to go here*/
+
+  body {
+    font-family: arial, sans;
+    /*width: 720px;*/
+    text-align: center;
+    margin: 20px auto;
+  }
+
+  svg {
+    /*border: 1px solid #f0f;*/
+    margin-bottom: 20px;
+  }
+
+  .anscombe-quartet-group {
+    width: 250px;
+    display: inline-block;
+    margin-right: 10px;
+
+  }
+
+  .summary-stat {
+    padding-right: 4px;
+  }
+
+  .anscombe-circle-group text {
+    fill: #aaa;
+    font-size: 11px;
+  }
+
+  .anscombe-circle-group circle {
+    fill: red;
+    stroke: #fff;
+    stroke-width:1px;
+  }
+
+  .axis text {
+    font-size: 12px;
+    fill: #777;
+  }
+
+  .axis path {
+    display: none;
+  }
+
+  .axis line {
+    stroke-width:1px;
+    stroke: #ccc;
+    stroke-dasharray: 2px 2px;
+  }
+
+  .summary-stat {
+    text-align: left;
+    font-size:12px;
+    /*margin:20px*/;
+  }
+
+  table {
+    width: 80px;
+    margin: 10px auto;
+    border-collapse: collapse;
+  }
+
+  .g-num {
+    text-align: right;
+  }
+
+  td {
+    font-size:11px;
+    padding: 3px 0;
+    border-bottom: 1px solid #dedede;
+  }
+
+  th {
+    text-align: right;
+    padding-bottom: 10px;
+    font-size: 11px;
+  }
+
+</style>
+
+<body>
+
+</body>
+
+
+
+<script>
+
+// TODO: add xScale and yScale variables with domains and ranges,
+// then position your circles accordingly.
+
+var margin = {top: 20, right: 40, bottom: 20, left: 10};
+
+var width = 250 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+var xScale = d3.scale.linear()
+    .range([0, width]);
+
+var yScale = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .tickSize(-height)
+    .tickPadding(8)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .tickSize(-width)
+    .tickPadding(8)
+    .orient("right");
+
+d3.tsv("quartet.tsv", ready);
+
+function ready(error, data) {
+  if (error) return console.warn(error);
+
+  data.forEach(function(d) {
+    d.x = +d.x;
+    d.y = +d.y;
+  });
+
+  xScale.domain(d3.extent(data, function(d) { return d.x; }));
+  yScale.domain(d3.extent(data, function(d) { return d.y; }));
+
+
+  quartetByGroupId = d3.nest()
+      .key(function(d) { return d.group; })
+      .entries(data);
+
+  quartetByGroupId.forEach(function(d) {
+    d.avgX = d3.mean(d.values.map(function(d) { return d.x; }));
+    d.avgY = d3.mean(d.values.map(function(d) { return d.y; }));
+  });
+
+  // d3.nest()
+  //     .key(function(d) { return d.group; })
+  //     .rollup(function(values) {
+  //       return {
+  //         avgX: d3.mean(values.map(function(d) { return d.x; })),
+  //         avgY: d3.mean(values.map(function(d) { return d.y; })),
+  //         data: values
+  //       };
+  //     })
+  //     .entries(data);
+
+
+  //here is your data join.
+  var quartetGroup = d3.select("body").selectAll(".anscombe-circle-group")
+      .data(quartetByGroupId)
+    .enter()
+      .append("div")
+      .attr("class", "anscombe-quartet-group");
+
+  quartetGroup.append("h3")
+      .text(function(d) { return d.key; });
+
+  var ssc = quartetGroup.append("div")
+      .attr("class", "summary-stat-container");
+
+  ssc.append("span")
+      .attr("class", "summary-stat")
+      .text(function(d) { return "Average x: " + d.avgX; });
+
+  ssc.append("span")
+      .attr("class", "summary-stat")
+      .text(function(d) { return "Average y: " + d3.round(d.avgY, 3); });
+
+  var svg = quartetGroup.append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + (height) + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + (width) + ",0)")
+      .call(yAxis);
+
+  var circleGroup = svg.selectAll(".anscombe-circle-group")
+      .data(function(d) { return d.values; })
+      .enter().append("g")
+      .attr("class", "anscombe-circle-group")
+      .attr("transform", function(d) { return "translate(" + xScale(d.x) + "," + yScale(d.y) + ")";  });
+
+  circleGroup.append("circle")
+      .attr("r", 5);
+
+  circleGroup.append("text")
+      .text(function(d) { return "(" + d.x + "," + d.y + ")"; })
+      .attr("dx", 6);
+
+  var table = quartetGroup.append("table");
+
+  var header = table.append("tr");
+
+  header.append("th")
+      .text("x");
+
+  header.append("th")
+      .text("y");
+
+  var row = table.selectAll("tr")
+      .data(function(d) { return d.values; })
+      .enter().append("tr")
+      .attr("class", "g-row");
+
+  row.append("td")
+      .attr("class", "g-x g-num")
+      .text(function(d) { return d.x; });
+
+  row.append("td")
+      .attr("class", "g-y g-num")
+      .text(function(d) { return d.y; });
+}
+
+
+</script>

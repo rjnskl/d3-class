@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+
+  body {
+    font-family: arial, sans;
+    font-size: 14px;
+    width: 960px;
+    margin: 40px auto;
+  }
+  svg {
+    border: 1px solid #f0f; 
+  }
+
+  .map-container path {
+    fill:#d0d0d0;
+    stroke:#fff;
+    stroke-width:.3px;
+  }
+
+</style>
+
+<body>
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+
+
+<script type="text/javascript">
+  
+var width = 300,
+    height = 200;
+
+var years = d3.range(1895, 2014);
+
+var pdsiByDivisionAndYear = d3.map(),
+    droughtAreaByYear = d3.map();
+
+var projection = d3.geo.albersUsa()
+    .scale(300)
+    .translate([width/2, height/2]);
+
+var path = d3.geo.path()
+  .projection(projection);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+queue()
+    .defer(d3.csv, "tidy-drought-data.csv")
+    .defer(d3.json, "climate-divisions2.json")
+    .await(ready);
+
+function ready(error, data, climateDivisions) {
+  if (error) return console.warn(error);
+
+  console.log("climateDivisions", climateDivisions);
+
+
+  var climateDivisionsFeature = topojson.feature(climateDivisions, climateDivisions.objects.divisions).features;
+
+  data.forEach(function(d) {
+    d.val = +d.val;
+  });
+
+  droughtLevelByYearAndId = d3.nest()
+      .key(function(d) { return d.year; })
+      .key(function(d) { return d.id; })
+      .entries(data);
+
+  // svg.append("g")
+  //     .attr("class", "map-container")
+  //   .selectAll("path")
+  //     .data(climateDivisionsFeature)
+  //   .enter().append("path")
+  //     .attr("d", path)
+  //     .style("fill", function(d) {
+  //       return droughtLevelByYearAndId[2013][d.id][0].val <= -1.25 ? "gold" : "#ccc";
+  //     });
+
+
+
+  //     .style("fill", function(d) { 
+
+  //       return '#f0f0f0';
+  //       var guns = gunsByFips[d.id];
+
+  //       if (!guns) return "#f0f0f0";
+
+  //       return color(gunsByFips[d.id]); });
+
+  // svg.append("g")
+  //     .attr("class", "county-bubble-group")
+  //   .selectAll(".county-bubble")
+  //     .data(topojson.feature(us, us.objects.counties).features)
+  //   .enter().append("circle")
+  //     .attr("class", "county-bubble")
+  //     .attr("d", path)
+  //     .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+  //     .attr("r", radius)
+
+  // svg.append("path")
+  //     .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a.id !== b.id; }))
+  //     .attr("class", "states")
+  //     .attr("d", path);
+  
+  // function radius(d) {
+  //   return Math.sqrt(gunsByFips[d.id])/2;
+  // }
+}
+
+
+
+</script>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+
+  body {
+    font-family: arial, sans;
+    font-size: 11px;
+  }
+  
+  svg {
+    border: 1px solid #f0f;
+  }
+
+  .axis line,
+  .axis path {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+  .g-country-line {
+    stroke: steelblue;
+    fill:none;
+    stroke-width: 2px;
+  }
+
+  .g-country-line.g-secondary-line {
+    stroke: #f0f0f0;
+  }
+
+  .country-container {
+    display: inline-block;
+  }
+
+</style>
+
+<body>
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+<script type="text/javascript">
+  
+var margin = {top: 20, right: 50, bottom: 20, left: 10};
+
+var width = 300 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+
+var xScale = d3.scale.linear()
+    .range([0,width]);
+
+var yScale = d3.scale.linear()
+    .range([height,0]);
+
+var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .orient("right");
+
+var line = d3.svg.line()
+      .x(function(d) { return xScale(d.year); })
+      .y(function(d) { return yScale(d.cop50); });
+
+d3.tsv("all-countries.tsv", ready);
+
+function ready(error, data) {
+  if (error) return console.warn(error);
+
+  console.log(data);
+
+  data.forEach(function(d) {
+
+    //remove all numbers
+    d.country = d.dataset.replace(/\d/g,'').split(" - ")[1].trim();
+
+    //remove all non-numbers
+    d.year = +d.dataset.replace(/\D/g,'');
+
+    d.cop50 = +d.cop50.replace(",", "");
+  });
+
+
+
+ usaData = data.filter(function(d) { return d.country == "United States"; });
+
+  //update domains based on extrema, which has pluses and minuses
+  xScale.domain(d3.extent(data, function(d) { return d.year; }));
+  yScale.domain(d3.extent(data, function(d) { return d.cop50; }));
+
+  var valuesByCountry = d3.nest()
+      .key(function(d) { return d.country; })
+      .entries(data);
+
+  var divContainer = d3.select("body").selectAll(".country-container")
+      .data(valuesByCountry)
+      .enter()
+      .append("div")
+      .attr("class", "country-container");
+
+  divContainer.append("h3")
+        .text(function(d) { return d.key; });
+
+  var svg = divContainer.append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + width + ",0)")
+      .call(yAxis);
+
+  svg.append("path")
+      .attr("class", "g-country-line")
+      .datum(usaData)
+      .attr("d", line);
+
+  svg.append("path")
+      .attr("class", "g-country-line g-secondary-line")
+      .datum(function(d) { return d.values; })
+      .attr("d", line);
+
+
+
+
+
+
+
+}
+
+
+</script>

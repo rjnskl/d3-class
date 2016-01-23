@@ -1,0 +1,4 @@
+mapshaper CONUS_CLIMATE_DIVISIONS/GIS.OFFICIAL_CLIM_DIVISIONS.shp \
+  -simplify 10% \
+  -filter 'STATE == "Iowa"' \
+  -o format=topojson tj/

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+
+    body {
+        font-family: 'arial', sans-serif;
+        font-size: 12px;
+        width:720px;
+        margin: 20px auto;
+    }
+
+    svg {
+      border:1px solid #f0f;
+    }
+
+    circle {
+      opacity: 0.3;
+    }
+
+    .axis text {
+      font-size: 12px;
+      fill: #777;
+    }
+
+    .axis path {
+      display: none;
+    }
+
+    .axis line {
+      stroke-width:1px;
+      stroke: #ccc;
+      stroke-dasharray: 2px 2px;
+    }
+
+    .update {
+      fill: #333;
+    }
+
+    .enter {
+      fill: green;
+    }
+
+    .exit {
+      fill: brown;
+    }
+
+</style>
+
+<body>
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+
+<script>
+
+var margin = {top: 20, right: 40, bottom: 20, left: 10};
+
+var width = 720 - margin.left - margin.right,
+   height = 400 - margin.top - margin.bottom;
+
+var yScale = d3.scale.linear()
+    .range([height, 0]);
+
+var xScale = d3.scale.linear()
+    .range([0, width]);
+
+var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .tickSize(-height)
+    .tickPadding(8)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .tickSize(-width)
+    .tickPadding(8)
+    .orient("right");
+
+var svg = d3.select("body").append("svg")
+   .attr("width", width + margin.left + margin.right)
+   .attr("height", height + margin.top + margin.bottom)
+ .append("g")
+   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// station 1
+d3.tsv("incomes.tsv", ready);
+
+function ready(err, data) {
+  
+  if (err) throw err;
+
+  // format your data
+  data.forEach( function (d) {
+      d.val = +d.val;
+      d.year = +d.year;
+  });
+
+  xScale.domain(d3.extent(data, function(d) { return d.year; }));
+  yScale.domain(d3.extent(data, function(d) { return d.val; }));
+
+  var allCountries = d3.set(data.map(function(d) { return d.country; })).values();
+
+  d3.select("body").append("div").selectAll(".g-country-buttons")
+      .data(allCountries)
+    .enter().append("button")
+      .attr("class", "g-country-buttons")
+      .text(function(d) { return d; })
+      .on("click", function(d) {
+        drawCutoffPoints(d);
+      });
+
+  var xAxisGroup = svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + (height) + ")")
+      .call(xAxis);
+
+  var yAxisGroup = svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + (width) + ",0)")
+      .call(yAxis);
+
+  function drawCutoffPoints(countryName) {
+
+    var thisCountry = data.filter(function(d) { return d.country == countryName; });
+
+    var countryCircleGroup = svg.selectAll(".country-circle-group")
+        .data(thisCountry, function(d) { return d.year + "-" + d.cutoff; });
+
+    countryCircleGroup.attr("class", "country-circle-group update");
+    
+    // ENTER 
+    var countryCircleGroupEnter = countryCircleGroup.enter()
+        .append("g")
+        .attr("class", "country-circle-group enter")
+        .attr("transform", function(d) { return "translate(" + xScale(d.year) + ", " + yScale(d.val) + ")"; });
+
+    // IF THERE ARE NEW G ELEMENTS, APPEND CIRCLES AND TEXT FOR THEM
+    countryCircleGroupEnter.append("circle")
+        .attr("r", 4);
+
+    countryCircleGroupEnter.append("text");
+    
+    // UPDATE ALL MY ELEMENTS
+    var updateSelection = svg.selectAll(".country-circle-group")
+        .transition()
+        .duration(300)
+        .style('opacity', 1)
+        .attr("transform", function(d) { return "translate(" + xScale(d.year) + ", " + yScale(d.val) + ")"; });
+
+    updateSelection.select("text")
+        .text(function(d) { return d.val; });
+
+    countryCircleGroup.exit()
+        .attr("class", "country-circle-group exit")
+        .transition()
+        .duration(300)
+        .style("opacity", 0)
+        .remove();
+
+  }
+
+  drawCutoffPoints("United States");
+
+  // Grab a random sample of letters from the alphabet, in alphabetical order.
+  // setInterval(function() {
+  //   var idx = Math.floor(allCountries.length * Math.random());
+  //   drawCutoffPoints(d3.shuffle(allCountries[idx]));
+  // }, 1500);
+
+
+}
+
+</script>
+
+
+
+
+
+
+
+
+
+    

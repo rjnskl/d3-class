@@ -1,0 +1,81 @@
+ <!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+    table {
+      border-collapse: collapse;
+    }
+
+    body {
+        font-family: 'arial', sans-serif;
+        font-size: 12px;
+    }
+
+    td {
+        text-align: right;
+        padding:3px 0;
+        border-bottom: 1px solid #ccc;
+    }
+
+</style>
+
+<body>
+
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+<script>
+
+// station 1
+d3.tsv("group1.tsv", function(error, data) {
+  
+  if (error) throw error;
+
+  // format your data
+  data.forEach( function (d) {
+      d.x = +d.x;
+      d.y = +d.y;
+  });
+
+  var d3Table = d3.select("body").append("table");
+
+  var tableTitle = d3Table.append("tr");
+
+  tableTitle.append("th")
+      .text("x")
+      .attr("class", "tableTitle");
+
+  tableTitle.append("th")
+      .text("y")
+      .attr("class", "tableTitle");
+
+  tableTitle.selectAll(".table-header-cell")
+      .data(["x", "y"])
+      .enter().append("th")
+      .text(function(d) { return d;});
+
+  var row = d3Table.selectAll(".table-row")
+      .data(data)
+      .enter()
+      .append("tr")
+      .attr("class", "table-row");
+
+  row.append("td")
+      .text(function (d) { return d.x; });
+
+  row.append("td")
+      .text(function (d) { return d.y; });
+});
+
+</script>
+
+
+
+
+
+
+
+
+

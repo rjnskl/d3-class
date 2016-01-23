@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<link rel="stylesheet" type="text/css" href="example.css">
+
+<body>
+
+<div class="g-graphic">
+  <div class="g-table-container"></div>
+  <div class="g-chart">
+    <div class="g-button-group">
+    </div>
+  </div>
+</div>
+
+</body>
+
+<script src="d3.js" charset="utf-8"></script>
+
+<script>
+
+var currentDisplayStatus = "time";
+
+var medalColors = {
+  "GOLD": "gold",
+  "SILVER": "silver",
+  "BRONZE": "brown",
+};
+
+var countryMap = {
+  "USA": "United States",
+  "GBR": "Great Britain",
+  "JAM": "Jamaica",
+  "CAN": "Canada",
+  "TRI": "Trinidad and Tobago",
+  "AUS": "Australia",
+  "GER": "Germany",
+  "NAM": "Namibia",
+  "CUB": "Cuba",
+  "URS": "Soviet Union",
+  "BAR": "Barbados",
+  "EUA": "United Team of Germany",
+  "HUN": "Hungary",
+  "PAN": "Panama",
+  "NED": "Netherlands",
+  "POR": "Portugal",
+  "NZL": "New Zealand",
+  "RSA": "South Africa",
+  "BUL": "Bulgaria" 
+};
+
+
+var margin = {top: 20, right: 60, bottom: 20, left: 10};
+
+var width = 900 - margin.left - margin.right,
+   height = 550 - margin.top - margin.bottom;
+
+var yScale = d3.scale.linear()
+    .range([height, 0]);
+
+var metersScale = d3.scale.linear()
+    .range([width, 0]);
+
+var timeScale = d3.scale.linear()
+    .range([width, 0]);
+
+var metersBehindAxis = d3.svg.axis()
+    .scale(metersScale)
+    .tickSize(-height)
+    .tickPadding(8)
+    .orient("bottom");
+
+var timeAxis = d3.svg.axis()
+    .scale(timeScale)
+    .tickSize(-height)
+    .tickPadding(8)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .tickPadding(8)
+    .orient("right")
+    .tickValues([2012, 2000, 1988, 1976, 1964, 1964, 1952, 1936, 1924, 1912, 1900])
+    .tickFormat(d3.round);
+
+verticies = d3.range(100).map(function(d) {
+  return [Math.random() * width, Math.random() * height];
+});
+
+var svg = d3.select(".g-chart").append("svg")
+   .attr("width", width + margin.left + margin.right)
+   .attr("height", height + margin.top + margin.bottom)
+ .append("g")
+   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+// station 1
+d3.csv("medalists-all.csv", ready); 
+
+function ready(err, data) {
+
+  if (err) throw err;
+
+  //format your data; calculate meters behind.
+  data.forEach( function (d) {
+      d.year = +d.year;
+      d.time = +d.time;
+  });
+
+  var medalsByCountry = d3.nest()
+      .key(function(d) { return d.countryCode; })
+      .entries(data);
+
+  // need to calcualte the meters back of each runner
+  var winnerTime = d3.min(data, function(d) { return d.time; });
+
+  data.forEach(function(d) {
+    d.metersBack = 100 - (100 / d.time) * winnerTime;
+  });
+
+  medalsByCountry.sort(function(a,b) {
+    return b.values.length - a.values.length;
+  });
+
+  //render buttons
+  renderButtons();
+
+  // render table
+  renderTable();
+
+
+  metersScale.domain(d3.extent(data, function(d) { return d.metersBack; }));
+  timeScale.domain(d3.extent(data, function(d) { return d.time; }));
+  yScale.domain(d3.extent(data, function(d) { return d.year; }));
+
+  var xAxisGroup = svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + (height) + ")")
+      .call(timeAxis);
+
+  var yAxisGroup = svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + (width) + ",0)")
+      .call(yAxis);
+
+  var medalDot = svg.selectAll(".g-medal")
+      .data(data).enter().append("circle")
+    .attr("class", "g-medal")
+      .attr("r", 5)
+      .style("fill", function(d) { return medalColors[d.medal]; })
+      .attr("cx", function(d) { return timeScale(d.time); })
+      .attr("cy", function(d) { return yScale(d.year); })
+      .on("mouseover", function(d) {
+        // console.log("d", d.time, d.metersBack);
+      });
+
+  var vertices = data.map(function(d) {
+    return [timeScale(d.time), yScale(d.year) + Math.random() - 0.5];
+  });
+
+  var voronoi = d3.geom.voronoi()
+      .clipExtent([[-margin.top - margin.bottom, -margin.left - margin.right], [width+margin.left + margin.right, height+margin.top + margin.bottom]]);
+
+  var path = svg.append("g").selectAll("path")
+      .data(voronoi(vertices), polygon)
+      .enter()
+      .append("path")
+      .attr("class", "g-overlay-section")
+      .attr("d", polygon )
+      .datum(function(d,i) { return data[i]; });
+      // .on("mouseover", renderTooltip );
+
+  function polygon(d) {
+    return  "M" + d.join("L") + "Z";
+  }
+
+  function renderTable() {
+    
+    var row = d3.select(".g-table-container").append("table").selectAll(".g-row")
+        .data(medalsByCountry)
+      .enter()
+        .append("tr")
+        .attr("class", function(d) { return "g-row " + d.key; })
+        .on("mouseover", highlightCountryDots)
+        .on("mouseout", removeCountryDotHighlight)
+
+    row.append("td")
+        .attr("class", "g-country-name")
+        .text(function(d) { return countryMap[d.key]; });
+
+    row.append("td")
+        .attr("class", "g-medal-count")
+        .text(function(d) { return d.values.length; });        
+  }
+
+  function renderButtons() {
+    d3.select(".g-button-group").selectAll(".g-scale-button")
+        .data(["time", "meters"])
+        .enter()
+        .append("button")
+        .text(function(d) { return d; })
+        .on("click", updateDisplay);
+  }
+
+  function removeCountryDotHighlight() {
+    medalDot.classed("highlighted", false);
+  }
+
+  function highlightCountryDots(d) {
+
+    var thisCountry = d.key;
+
+    medalDot.classed("highlighted", false);
+
+    medalDot
+        .classed("highlighted", function (d) { return d.countryCode == thisCountry; });
+  }
+
+  function updateDisplay(d) {
+    currentDisplayStatus = (d === "time" ? "time" : "meters");
+
+    var thisField, thisAxis, thisScale;
+
+    if (currentDisplayStatus == "meters") {
+      thisScale = metersScale;
+      thisAxis = metersBehindAxis;
+      thisField = "metersBack";
+    }
+
+    if (currentDisplayStatus == "time") {
+      thisScale = timeScale;
+      thisAxis = timeAxis;
+      thisField = "time";
+    }
+
+    medalDot
+        .transition()
+        .duration(400)
+        .attr("cx", function(d) { return thisScale(d[thisField]); });
+        
+    xAxisGroup
+        .transition()
+        .duration(400)
+        .call(thisAxis);
+  } 
+
+}
+
+</script>
+
+
+
+
+
+
+
+
+
+    

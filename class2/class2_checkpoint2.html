@@ -1,0 +1,59 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+
+<style type="text/css">
+  /*css to go here*/
+  svg {
+    border:1px solid #f0f;
+  }
+
+</style>
+
+<body></body>
+
+
+
+<script>
+//JS to go here
+
+var margin = {top: 20, right: 50, bottom: 20, left: 0};
+
+var width = 720 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width]);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+d3.tsv("jobs.tsv", ready);
+
+function ready(err, data) {
+
+  if (err) throw "error loading data";
+
+   data.forEach(function(d) {
+    d.jobs_change = +d.jobs_change;
+    d.private_job_change = +d.private_job_change;
+    d.unemployment_rate = +d.unemployment_rate;
+
+    var s = d.month_year.split("-");
+
+    d.date = new Date(s[0], (+s[1]-1) );
+  });
+
+  y.domain(d3.extent(data, function(d) { return d.jobs_change; }));
+
+  data.sort(function(a,b) { return a.date - b.date; });
+
+  x.domain(data.map(function(d) { return d.month_year; }));
+}
+
+</script>
